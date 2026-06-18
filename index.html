@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CipherLab — Cryptanalysis Toolkit</title>
+  <meta name="description" content="Encrypt, decrypt, and break classical ciphers. Implements brute force, frequency analysis, and the Kasiski examination.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">CIPHER<span class="logo-accent">LAB</span></span>
+      <span class="logo-sub">Cryptanalysis Toolkit</span>
+    </div>
+
+    <nav class="cipher-tabs" role="tablist">
+      <button class="cipher-tab active" data-cipher="caesar"       role="tab">CAESAR</button>
+      <button class="cipher-tab"        data-cipher="atbash"       role="tab">ATBASH</button>
+      <button class="cipher-tab"        data-cipher="rot13"        role="tab">ROT-13</button>
+      <button class="cipher-tab"        data-cipher="vigenere"     role="tab">VIGENÈRE</button>
+      <button class="cipher-tab"        data-cipher="railfence"    role="tab">RAIL FENCE</button>
+      <button class="cipher-tab"        data-cipher="substitution" role="tab">SUBSTITUTION</button>
+    </nav>
+
+    <div class="header-actions">
+      <a href="https://github.com/ParthM200/CipherLab" class="gh-link" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ── WORKSPACE ───────────────────────────────────────────────────────── -->
+<main class="workspace">
+  <div class="workspace-grid">
+
+    <!-- LEFT: Input / Output / Controls -->
+    <section class="panel panel-main">
+
+      <div>
+        <label class="field-label">PLAINTEXT / INPUT</label>
+        <textarea id="input-text" class="text-area" rows="5" spellcheck="false" placeholder="Enter your message…"></textarea>
+      </div>
+
+      <!-- Cipher Controls -->
+      <div class="controls-row">
+
+        <div id="controls-caesar" class="cipher-controls">
+          <span class="ctrl-label">SHIFT</span>
+          <div class="slider-wrap">
+            <input type="range" id="caesar-shift" min="1" max="25" value="3">
+            <span id="caesar-shift-val" class="range-val">3</span>
+          </div>
+        </div>
+
+        <div id="controls-atbash" class="cipher-controls" style="display:none">
+          <span class="ctrl-note">No key — A↔Z, B↔Y, C↔X…</span>
+        </div>
+
+        <div id="controls-rot13" class="cipher-controls" style="display:none">
+          <span class="ctrl-note">Fixed shift of 13 — self-inverse</span>
+        </div>
+
+        <div id="controls-vigenere" class="cipher-controls" style="display:none">
+          <span class="ctrl-label">KEYWORD</span>
+          <input type="text" id="vigenere-key" class="key-input" value="KEY" placeholder="e.g. SECRET" spellcheck="false">
+        </div>
+
+        <div id="controls-railfence" class="cipher-controls" style="display:none">
+          <span class="ctrl-label">RAILS</span>
+          <div class="slider-wrap">
+            <input type="range" id="rail-count" min="2" max="8" value="3">
+            <span id="rail-count-val" class="range-val">3</span>
+          </div>
+        </div>
+
+        <div id="controls-substitution" class="cipher-controls" style="display:none">
+          <button id="btn-gen-key" class="btn btn-ghost">↺ NEW KEY</button>
+        </div>
+
+        <div class="action-btns">
+          <button id="btn-encrypt" class="btn btn-primary">ENCRYPT ↓</button>
+          <button id="btn-decrypt" class="btn btn-secondary">DECRYPT ↑</button>
+          <button id="btn-swap"    class="btn btn-ghost">⇅</button>
+        </div>
+      </div>
+
+      <!-- Substitution key display -->
+      <div id="sub-key-wrap" style="display:none">
+        <div class="sub-key-hdr">KEY MAPPING — A–Z PLAINTEXT → CIPHERTEXT</div>
+        <div id="sub-key-display" class="sub-key-grid"></div>
+      </div>
+
+      <!-- Rail fence visualization -->
+      <div id="rail-fence-wrap" class="rail-fence-wrap" style="display:none">
+        <div class="viz-label">RAIL FENCE PATTERN</div>
+        <canvas id="rail-canvas" width="640" height="110"></canvas>
+      </div>
+
+      <!-- Output -->
+      <div style="margin-top:14px">
+        <div class="field-label-row">
+          <label class="field-label">CIPHERTEXT / OUTPUT</label>
+          <button id="btn-copy" class="btn btn-ghost btn-sm">COPY</button>
+        </div>
+        <textarea id="output-text" class="text-area text-area--output" rows="5" spellcheck="false" readonly></textarea>
+      </div>
+    </section>
+
+    <!-- RIGHT: Analysis + Attack -->
+    <aside class="panel panel-analysis">
+
+      <!-- Cipher wheel (Caesar only) -->
+      <div id="cipher-wheel-wrap" class="cipher-wheel-wrap" style="display:flex">
+        <div class="viz-label" style="width:100%">CIPHER WHEEL — OUTER: PLAINTEXT · INNER: CIPHERTEXT</div>
+        <canvas id="cipher-wheel" width="220" height="220"></canvas>
+      </div>
+
+      <!-- Frequency chart -->
+      <div>
+        <div class="viz-label">
+          LETTER FREQUENCY
+          <span class="freq-legend">
+            <span class="legend-dot cyan"></span>your text
+            <span class="legend-dot amber"></span>english
+          </span>
+        </div>
+        <div class="freq-chart-wrap">
+          <canvas id="freq-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-ic">—</div>
+          <div class="stat-lbl">INDEX OF COINCIDENCE</div>
+          <div class="stat-sub">English ≈ 0.065</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-entropy">—</div>
+          <div class="stat-lbl">ENTROPY (bits)</div>
+          <div class="stat-sub">Random ≈ 4.7</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-chars">—</div>
+          <div class="stat-lbl">LETTER COUNT</div>
+        </div>
+      </div>
+
+      <!-- Attack Engine -->
+      <div class="attack-section">
+        <div class="section-hdr">
+          <span class="section-title">ATTACK ENGINE</span>
+          <span class="section-badge">AUTOMATED CRYPTANALYSIS</span>
+        </div>
+        <p id="attack-desc"></p>
+        <div id="attack-run-area">
+          <button id="attack-brute-force" class="btn btn-attack attack-action" style="display:none">▶ RUN BRUTE FORCE</button>
+          <button id="attack-kasiski"     class="btn btn-attack attack-action" style="display:none">▶ RUN KASISKI + IC</button>
+          <button id="attack-frequency"   class="btn btn-attack attack-action" style="display:none">▶ RUN FREQ ANALYSIS</button>
+          <button id="attack-railforce"   class="btn btn-attack attack-action" style="display:none">▶ BRUTE FORCE RAILS</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Attack results (full width, appears below) -->
+  <div id="attack-results" class="attack-results" style="display:none"></div>
+
+  <!-- Cipher info -->
+  <div class="cipher-info">
+    <div class="cipher-info-hdr">
+      <span id="info-name"></span>
+      <span id="info-year"></span>
+      <span id="info-era"></span>
+    </div>
+    <div class="cipher-info-grid">
+      <div>
+        <div class="info-block-lbl">HISTORY</div>
+        <p id="info-history" class="info-text"></p>
+      </div>
+      <div>
+        <div class="info-block-lbl warn">WHY IT BREAKS</div>
+        <p id="info-broken" class="info-text"></p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── MODERN CRYPTO ────────────────────────────────────────────────────── -->
+<section class="modern-section">
+  <div class="modern-inner">
+    <div class="modern-eyebrow">// BEYOND CLASSICAL</div>
+    <h2 class="modern-title">WHY ALL OF THESE FAIL — AND WHAT REPLACED THEM</h2>
+    <p class="modern-intro">Every cipher above was called unbreakable at some point. All were broken. The root cause is always the same: either the key space is too small (brute force wins) or statistical patterns survive encryption (frequency analysis wins). Modern cryptography is engineered from the ground up to defeat both.</p>
+
+    <div class="modern-grid">
+
+      <div class="modern-card">
+        <div class="mc-icon">🔑</div>
+        <div class="mc-title">AES-256</div>
+        <div class="mc-year">2001 · Standard today · Used everywhere</div>
+        <p class="mc-text">Key space: 2²⁵⁶ ≈ 10⁷⁷. If every atom in the observable universe were a computer checking a billion keys per second since the Big Bang, you'd have checked ~10⁴¹ keys — not even close. AES also destroys all statistical patterns through 14 rounds of substitution and permutation. Output is indistinguishable from random noise. Frequency analysis finds nothing.</p>
+        <span class="mc-tag">SYMMETRIC</span>
+      </div>
+
+      <div class="modern-card">
+        <div class="mc-icon">🔐</div>
+        <div class="mc-title">RSA</div>
+        <div class="mc-year">1977 · Public-key cryptography</div>
+        <p class="mc-text">Based on mathematical asymmetry: multiplying two 1024-bit primes takes milliseconds, but factoring the product is computationally infeasible on classical hardware. Gives you a public key (anyone can encrypt to you) and a private key (only you decrypt). No shared secret needs to be transmitted — which solves the key exchange problem that every classical cipher ignores.</p>
+        <span class="mc-tag">ASYMMETRIC</span>
+      </div>
+
+      <div class="modern-card">
+        <div class="mc-icon">∞</div>
+        <div class="mc-title">One-Time Pad</div>
+        <div class="mc-year">1882 · Theoretically perfect</div>
+        <p class="mc-text">XOR every bit of the plaintext with a truly random key the same length as the message — use the key exactly once. Claude Shannon proved in 1949 that this provides perfect secrecy: no amount of ciphertext reveals anything about the plaintext, mathematically. Impractical at scale because the key must be as long as the message and securely transferred in advance — but it works. Diplomatic hotlines and nuclear command systems have used it.</p>
+        <span class="mc-tag">PERFECT SECRECY</span>
+      </div>
+
+      <div class="modern-card">
+        <div class="mc-icon">⚛</div>
+        <div class="mc-title">Post-Quantum</div>
+        <div class="mc-year">2024 · NIST standards finalized</div>
+        <p class="mc-text">Shor's algorithm on a quantum computer breaks RSA and ECC — the factoring problem becomes polynomial-time. Grover's algorithm effectively halves AES key length. NIST finalized the first post-quantum standards in 2024: CRYSTALS-Kyber (key exchange) and CRYSTALS-Dilithium (digital signatures), based on lattice problems that quantum computers cannot shortcut. Encryption is already being re-engineered for a quantum world.</p>
+        <span class="mc-tag">FUTURE</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <span>Built from a 15-line Python Caesar cipher. The frequency analysis implements Al-Kindi's 900 AD method. The Kasiski examination reproduces the 1863 technique that broke the "unbreakable" Vigenère.</span>
+  <a href="https://github.com/ParthM200/CipherLab" target="_blank" rel="noopener">View Source</a>
+</footer>
+
+<script src="js/ciphers.js"></script>
+<script src="js/attacks.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
